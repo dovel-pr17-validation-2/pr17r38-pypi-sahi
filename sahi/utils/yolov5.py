@@ -1,0 +1,28 @@
+"""YOLOv5 model utilities and constants."""
+
+from sahi.utils.file import download_from_url
+
+
+class Yolov5TestConstants:
+    """YOLOv5 test model configurations."""
+
+    YOLOV5N_MODEL_URL = "https://github.com/ultralytics/yolov5/releases/download/v6.0/yolov5n.pt"
+    YOLOV5N_MODEL_PATH = "tests/data/models/yolov5/yolov5n.pt"
+
+    YOLOV5S6_MODEL_URL = "https://github.com/ultralytics/yolov5/releases/download/v5.0/yolov5s6.pt"
+    YOLOV5S6_MODEL_PATH = "tests/data/models/yolov5/yolov5s6.pt"
+
+    YOLOV5M6_MODEL_URL = "https://github.com/ultralytics/yolov5/releases/download/v5.0/yolov5m6.pt"
+    YOLOV5M6_MODEL_PATH = "tests/data/models/yolov5/yolov5m6.pt"
+
+
+def download_yolov5n_model(destination_path: str | None = None) -> None:
+    """Download the YOLOv5-Nano model for testing."""
+    download_from_url(Yolov5TestConstants.YOLOV5N_MODEL_URL, destination_path or Yolov5TestConstants.YOLOV5N_MODEL_PATH)
+
+
+def download_yolov5s6_model(destination_path: str | None = None) -> None:
+    """Download the YOLOv5s6 model for testing."""
+    download_from_url(
+        Yolov5TestConstants.YOLOV5S6_MODEL_URL, destination_path or Yolov5TestConstants.YOLOV5S6_MODEL_PATH
+    )

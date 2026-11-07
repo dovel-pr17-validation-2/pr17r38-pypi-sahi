@@ -1,0 +1,80 @@
+name: 🛠️ Build and 📚 Publish Docs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  release:
+    types: [published]
+
+# Ensure only one concurrent deployment
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.ref}}
+  cancel-in-progress: true
+
+# Restrict permissions by default
+permissions:
+  contents: write # Required for committing to gh-pages
+  pages: write # Required for deploying to Pages
+  pull-requests: write # Required for PR comments
+
+jobs:
+  deploy:
+    name: 📚 Publish Docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Install uv and set Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: ${{ matrix.python-version }}
+          activate-environment: true
+
+      - name: 🏗️ Install dependencies
+        run: |
+          uv pip install -r pyproject.toml --group docs
+
+      - name: ⚙️ Configure git for github-actions
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: 📚 Build Docs
+        run: |
+          # English site -> site/
+          uv run zensical build
+          # Keep the zh site's custom styling & images in sync with English
+          mkdir -p docs/zh/stylesheets docs/zh/images
+          cp docs/stylesheets/extra.css docs/zh/stylesheets/extra.css
+          cp -r docs/images/* docs/zh/images/ 2>/dev/null || true
+          # Rebuild /zh as a standalone localized site (own nav, links stay inside /zh/)
+          rm -rf site/zh
+          uv run zensical build -f zensical.zh.toml
+          # Keep the tr site's custom styling & images in sync with English
+          mkdir -p docs/tr/stylesheets docs/tr/images
+          cp docs/stylesheets/extra.css docs/tr/stylesheets/extra.css
+          cp -r docs/images/* docs/tr/images/ 2>/dev/null || true
+          # Rebuild /tr as a standalone localized site (own nav, links stay inside /tr/)
+          rm -rf site/tr
+          uv run zensical build -f zensical.tr.toml
+          # Publish each page's markdown source beside its HTML, plus llms.txt
+          uv run python scripts/docs/export_markdown_sources.py
+
+      - name: 🚀 Deploy to GitHub Pages
+        if:
+          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          github.event_name == 'workflow_dispatch'
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          force_orphan: true

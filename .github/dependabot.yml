@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: 👷
+    target-branch: "main"
+  # Python
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: ⬆️
+    target-branch: "main"
+    # The ci extra pins torch and torchvision to the supported floor on
+    # purpose, so they are raised by hand together with that floor. Security
+    # alerts for them still show up under the Security tab.
+    ignore:
+      - dependency-name: "torch"
+      - dependency-name: "torchvision"
